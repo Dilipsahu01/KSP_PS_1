@@ -1,0 +1,326 @@
+DROP DATABASE IF EXISTS ksp_database;
+CREATE DATABASE ksp_database;
+USE ksp_database;
+
+-- ==========================================
+-- MASTER & LOOKUP TABLES
+-- ==========================================
+
+CREATE TABLE State (
+    StateID INT PRIMARY KEY,
+    StateName VARCHAR(255),
+    NationalityID INT,
+    Active BOOLEAN
+);
+
+CREATE TABLE District (
+    DistrictID INT PRIMARY KEY,
+    DistrictName VARCHAR(255),
+    StateID INT,
+    Active BOOLEAN,
+    FOREIGN KEY (StateID) REFERENCES State(StateID)
+);
+
+CREATE TABLE Court (
+    CourtID INT PRIMARY KEY,
+    CourtName VARCHAR(255),
+    DistrictID INT,
+    StateID INT,
+    Active BOOLEAN,
+    FOREIGN KEY (DistrictID) REFERENCES District(DistrictID),
+    FOREIGN KEY (StateID) REFERENCES State(StateID)
+);
+
+CREATE TABLE UnitType (
+    UnitTypeID INT PRIMARY KEY,
+    UnitTypeName VARCHAR(255),
+    City_Dist_State VARCHAR(100),
+    Hierarchy INT,
+    Active BOOLEAN
+);
+
+CREATE TABLE Unit (
+    UnitID INT PRIMARY KEY,
+    UnitName VARCHAR(255),
+    TypeID INT,
+    ParentUnit INT,
+    NationalityID INT,
+    StateID INT,
+    DistrictID INT,
+    Active BOOLEAN,
+    FOREIGN KEY (TypeID) REFERENCES UnitType(UnitTypeID),
+    FOREIGN KEY (ParentUnit) REFERENCES Unit(UnitID), -- Self-referencing hierarchy
+    FOREIGN KEY (StateID) REFERENCES State(StateID),
+    FOREIGN KEY (DistrictID) REFERENCES District(DistrictID)
+);
+
+CREATE TABLE `Rank` (
+    RankID INT PRIMARY KEY,
+    RankName VARCHAR(255),
+    Hierarchy INT,
+    Active BOOLEAN
+);
+
+CREATE TABLE Designation (
+    DesignationID INT PRIMARY KEY,
+    DesignationName VARCHAR(255),
+    Active BOOLEAN,
+    SortOrder INT
+);
+
+CREATE TABLE Employee (
+    EmployeeID INT PRIMARY KEY,
+    DistrictID INT,
+    UnitID INT,
+    RankID INT,
+    DesignationID INT,
+    KGID VARCHAR(100),
+    FirstName VARCHAR(255),
+    EmployeeDOB DATE,
+    GenderID INT,
+    BloodGroupID INT,
+    PhysicallyChallenged BOOLEAN,
+    AppointmentDate DATE,
+    FOREIGN KEY (DistrictID) REFERENCES District(DistrictID),
+    FOREIGN KEY (UnitID) REFERENCES Unit(UnitID),
+    FOREIGN KEY (RankID) REFERENCES `Rank`(RankID),
+    FOREIGN KEY (DesignationID) REFERENCES Designation(DesignationID)
+);
+
+CREATE TABLE CaseCategory (
+    CaseCategoryID INT PRIMARY KEY,
+    LookupValue VARCHAR(100)
+);
+
+CREATE TABLE GravityOffence (
+    GravityOffenceID INT PRIMARY KEY,
+    LookupValue VARCHAR(100)
+);
+
+CREATE TABLE CrimeHead (
+    CrimeHeadID INT PRIMARY KEY,
+    CrimeGroupName VARCHAR(255),
+    Active BOOLEAN
+);
+
+CREATE TABLE CrimeSubHead (
+    CrimeSubHeadID INT PRIMARY KEY,
+    CrimeHeadID INT,
+    CrimeHeadName VARCHAR(255),
+    SeqID INT,
+    FOREIGN KEY (CrimeHeadID) REFERENCES CrimeHead(CrimeHeadID)
+);
+
+CREATE TABLE CaseStatusMaster (
+    CaseStatusID INT PRIMARY KEY,
+    CaseStatusName VARCHAR(255)
+);
+
+CREATE TABLE Act (
+    ActCode VARCHAR(100) PRIMARY KEY,
+    ActDescription VARCHAR(500),
+    ShortName VARCHAR(255),
+    Active BOOLEAN
+);
+
+CREATE TABLE Section (
+    SectionCode VARCHAR(100) PRIMARY KEY,
+    ActCode VARCHAR(100),
+    SectionDescription VARCHAR(500),
+    Active BOOLEAN,
+    FOREIGN KEY (ActCode) REFERENCES Act(ActCode)
+);
+
+CREATE TABLE CrimeHeadActSection (
+    CrimeHeadID INT,
+    ActCode VARCHAR(100),
+    SectionCode VARCHAR(100),
+    FOREIGN KEY (CrimeHeadID) REFERENCES CrimeHead(CrimeHeadID),
+    FOREIGN KEY (ActCode) REFERENCES Act(ActCode),
+    FOREIGN KEY (SectionCode) REFERENCES Section(SectionCode)
+);
+
+CREATE TABLE CasteMaster (
+    caste_master_id INT PRIMARY KEY,
+    caste_master_name VARCHAR(255)
+);
+
+CREATE TABLE ReligionMaster (
+    ReligionID INT PRIMARY KEY,
+    ReligionName VARCHAR(255)
+);
+
+CREATE TABLE OccupationMaster (
+    OccupationID INT PRIMARY KEY,
+    OccupationName VARCHAR(255)
+);
+
+-- ==========================================
+-- CORE TRANSACTIONAL TABLES
+-- ==========================================
+
+CREATE TABLE CaseMaster (
+    CaseMasterID INT PRIMARY KEY,
+    CrimeNo VARCHAR(100),
+    CaseNo VARCHAR(100),
+    CrimeRegisteredDate DATE,
+    PolicePersonID INT,
+    PoliceStationID INT,
+    CaseCategoryID INT,
+    GravityOffenceID INT,
+    CrimeMajorHeadID INT,
+    CrimeMinorHeadID INT,
+    CaseStatusID INT,
+    CourtID INT,
+    FOREIGN KEY (PolicePersonID) REFERENCES Employee(EmployeeID),
+    FOREIGN KEY (PoliceStationID) REFERENCES Unit(UnitID),
+    FOREIGN KEY (CaseCategoryID) REFERENCES CaseCategory(CaseCategoryID),
+    FOREIGN KEY (GravityOffenceID) REFERENCES GravityOffence(GravityOffenceID),
+    FOREIGN KEY (CrimeMajorHeadID) REFERENCES CrimeHead(CrimeHeadID),
+    FOREIGN KEY (CrimeMinorHeadID) REFERENCES CrimeSubHead(CrimeSubHeadID),
+    FOREIGN KEY (CaseStatusID) REFERENCES CaseStatusMaster(CaseStatusID),
+    FOREIGN KEY (CourtID) REFERENCES Court(CourtID)
+);
+
+CREATE TABLE Inv_OccuranceTime (
+    CaseMasterID INT PRIMARY KEY, -- Made PK to enforce 1-to-1 relationship
+    IncidentFromDate DATETIME,
+    IncidentToDate DATETIME,
+    InfoReceivedPSDate DATETIME,
+    latitude DECIMAL(10,8),
+    longitude DECIMAL(10,8),
+    BriefFacts LONGTEXT, -- Nvarchar(Max) translation
+    FOREIGN KEY (CaseMasterID) REFERENCES CaseMaster(CaseMasterID)
+);
+
+CREATE TABLE ComplainantDetails (
+    ComplainantID INT PRIMARY KEY,
+    CaseMasterID INT,
+    ComplainantName VARCHAR(255),
+    AgeYear INT,
+    OccupationID INT,
+    ReligionID INT,
+    CasteID INT,
+    GenderID INT,
+    FOREIGN KEY (CaseMasterID) REFERENCES CaseMaster(CaseMasterID),
+    FOREIGN KEY (OccupationID) REFERENCES OccupationMaster(OccupationID),
+    FOREIGN KEY (ReligionID) REFERENCES ReligionMaster(ReligionID),
+    FOREIGN KEY (CasteID) REFERENCES CasteMaster(caste_master_id)
+);
+
+CREATE TABLE ActSectionAssociation (
+    CaseMasterID INT,
+    ActID VARCHAR(100),      -- Document uses ActID, but points to VARCHAR ActCode
+    SectionID VARCHAR(100),  -- Document uses SectionID, but points to VARCHAR SectionCode
+    ActOrderID INT,
+    SectionOrderID INT,
+    FOREIGN KEY (CaseMasterID) REFERENCES CaseMaster(CaseMasterID),
+    FOREIGN KEY (ActID) REFERENCES Act(ActCode),
+    FOREIGN KEY (SectionID) REFERENCES Section(SectionCode)
+);
+
+CREATE TABLE Victim (
+    VictimMasterID INT PRIMARY KEY,
+    CaseMasterID INT,
+    VictimName VARCHAR(255),
+    AgeYear INT,
+    GenderID INT,
+    VictimPolice VARCHAR(10),
+    FOREIGN KEY (CaseMasterID) REFERENCES CaseMaster(CaseMasterID)
+);
+
+CREATE TABLE Accused (
+    AccusedMasterID INT PRIMARY KEY,
+    CaseMasterID INT,
+    AccusedName VARCHAR(255),
+    AgeYear INT,
+    GenderID INT,
+    PersonID VARCHAR(50),
+    FOREIGN KEY (CaseMasterID) REFERENCES CaseMaster(CaseMasterID)
+);
+
+CREATE TABLE ArrestSurrender (
+    ArrestSurrenderID INT PRIMARY KEY,
+    CaseMasterID INT,
+    ArrestSurrenderTypeID INT,
+    ArrestSurrenderDate DATE,
+    ArrestSurrenderStateId INT,
+    ArrestSurrenderDistrictId INT,
+    PoliceStationID INT,
+    IOID INT,
+    CourtID INT,
+    AccusedMasterID INT,
+    IsAccused BOOLEAN,
+    IsComplainantAccused BOOLEAN,
+    FOREIGN KEY (CaseMasterID) REFERENCES CaseMaster(CaseMasterID),
+    FOREIGN KEY (ArrestSurrenderStateId) REFERENCES State(StateID),
+    FOREIGN KEY (ArrestSurrenderDistrictId) REFERENCES District(DistrictID),
+    FOREIGN KEY (PoliceStationID) REFERENCES Unit(UnitID),
+    FOREIGN KEY (IOID) REFERENCES Employee(EmployeeID),
+    FOREIGN KEY (CourtID) REFERENCES Court(CourtID),
+    FOREIGN KEY (AccusedMasterID) REFERENCES Accused(AccusedMasterID)
+);
+
+CREATE TABLE inv_arrestsurrenderaccused (
+    ArrestSurrenderID INT,
+    AccusedMasterID INT,
+    FOREIGN KEY (ArrestSurrenderID) REFERENCES ArrestSurrender(ArrestSurrenderID),
+    FOREIGN KEY (AccusedMasterID) REFERENCES Accused(AccusedMasterID)
+);
+
+CREATE TABLE ChargesheetDetails (
+    CSID INT PRIMARY KEY,
+    CaseMasterID INT,
+    csdate DATETIME,
+    cstype CHAR(1),
+    PolicePersonID INT,
+    FOREIGN KEY (CaseMasterID) REFERENCES CaseMaster(CaseMasterID),
+    FOREIGN KEY (PolicePersonID) REFERENCES Employee(EmployeeID)
+);
+
+-- ==========================================
+-- AUDIT & SECURITY SCALPEL (Datathon Additions)
+-- ==========================================
+
+CREATE TABLE audit_log (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    timestamp DATETIME,
+    user_id VARCHAR(50),
+    district_id INT,
+    action VARCHAR(50),
+    query_key VARCHAR(100),
+    params_hash VARCHAR(64),
+    outcome TEXT
+);
+
+-- Note: The views assume DistrictID exists in your base tables. 
+-- In your schema, crimes are stored in CaseMaster which joins with Unit (which has DistrictID).
+-- We'll create basic representations here so your Next.js code doesn't break, 
+-- but you may need to tweak these JOINs slightly based on your exact column names!
+
+DELIMITER //
+CREATE FUNCTION get_current_district() RETURNS INT
+DETERMINISTIC
+BEGIN
+    RETURN @current_district;
+END //
+DELIMITER ;
+
+CREATE VIEW crimes_scoped_view AS 
+SELECT c.*, u.DistrictID 
+FROM CaseMaster c
+JOIN Unit u ON c.PoliceStationID = u.UnitID 
+WHERE u.DistrictID = get_current_district();
+
+CREATE VIEW arrests_scoped_view AS 
+SELECT a.*, u.DistrictID 
+FROM ArrestSurrender a
+JOIN Unit u ON a.PoliceStationID = u.UnitID 
+WHERE u.DistrictID = get_current_district();
+
+CREATE VIEW chargesheets_scoped_view AS 
+SELECT cs.*, u.DistrictID 
+FROM ChargesheetDetails cs
+JOIN CaseMaster c ON cs.CaseMasterID = c.CaseMasterID
+JOIN Unit u ON c.PoliceStationID = u.UnitID 
+WHERE u.DistrictID = get_current_district();
