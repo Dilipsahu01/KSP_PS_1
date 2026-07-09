@@ -74,20 +74,53 @@ function detectCrossDistrictMention(query: string, userDistrictId: number): stri
 
 // PARAMETER EXTRACTION & VALIDATION
 const llmExtractParams = async (query: string, intentKey: string): Promise<any[]> => {
-    // TODO for production: Swap this Regex block for a fast, low-temperature LLM call 
-    // structured to output EXACTLY a JSON array of ISO dates: ["2026-03-01", "2026-04-15"]
-    
+    // Production: Low-temperature LLM call for precise parameter extraction
     if (['arrests_by_date_range', 'crimes_by_date_range', 'chargesheets_by_date_range'].includes(intentKey)) {
-        // Current fallback logic:
-        const yearMatch = query.match(/\b(20\d{2})\b/);
-        const year = yearMatch ? yearMatch[1] : new Date().getFullYear().toString();
-        return [`${year}-01-01`, `${year}-12-31`]; 
+        try {
+            const llmExtraction = await fetch(process.env.OLLAMA_ENDPOINT || 'http://localhost:11434/api/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: 'llama3',
+                    prompt: `System: Extract the date range from the user's query and output ONLY a JSON array of two ISO dates like ["YYYY-MM-DD", "YYYY-MM-DD"]. If no dates are found, return ["${new Date().getFullYear()}-01-01", "${new Date().getFullYear()}-12-31"]. Query: ${query}`,
+                    stream: false,
+                    format: 'json'
+                })
+            }).then(res => res.json());
+            
+            const dates = JSON.parse(llmExtraction.response);
+            if (Array.isArray(dates) && dates.length === 2) {
+                return dates;
+            }
+        } catch (e) {
+            console.error("LLM Extraction failed, falling back to defaults.");
+        }
+        return [`${new Date().getFullYear()}-01-01`, `${new Date().getFullYear()}-12-31`];
     }
+    
     if (intentKey === 'fir_trend_by_month') {
-        const yearMatch = query.match(/\b(20\d{2})\b/);
-        const year = yearMatch ? yearMatch[1] : new Date().getFullYear().toString();
-        return [year];
+        try {
+            const llmExtraction = await fetch(process.env.OLLAMA_ENDPOINT || 'http://localhost:11434/api/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: 'llama3',
+                    prompt: `System: Extract the 4-digit year from the user's query and output ONLY a JSON array containing the year as a string like ["YYYY"]. If no year is found, return ["${new Date().getFullYear()}"]. Query: ${query}`,
+                    stream: false,
+                    format: 'json'
+                })
+            }).then(res => res.json());
+            
+            const parsed = JSON.parse(llmExtraction.response);
+            if (Array.isArray(parsed) && parsed.length === 1) {
+                return parsed;
+            }
+        } catch (e) {
+            console.error("LLM Extraction failed, falling back to default year.");
+        }
+        return [new Date().getFullYear().toString()];
     }
+    
     return [];
 };
 
