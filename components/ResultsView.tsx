@@ -12,9 +12,7 @@ interface ResultsViewProps {
   onOpenXAI: () => void;
 }
 
-// ============================================================================
 // MAIN RESULTS VIEW — Switches layout based on visualization_type
-// ============================================================================
 export default function ResultsView({ payload, onOpenXAI }: ResultsViewProps) {
   const { response, explainability, security_context, processing_time_ms, intent_routed } = payload;
 
@@ -60,9 +58,7 @@ export default function ResultsView({ payload, onOpenXAI }: ResultsViewProps) {
   );
 }
 
-// ============================================================================
 // SQL / ANALYTICAL VIEW — KPI Cards + Bar Chart
-// ============================================================================
 function SQLResultsView({ payload }: { payload: XAIPayload }) {
   // Mock trend data for chart demonstration
   const chartData = [
@@ -136,9 +132,7 @@ function SQLResultsView({ payload }: { payload: XAIPayload }) {
   );
 }
 
-// ============================================================================
 // RAG / INVESTIGATIVE VIEW — Narrative + Citations
-// ============================================================================
 function RAGResultsView({ payload }: { payload: XAIPayload }) {
   return (
     <div className="grid grid-cols-5 gap-5 fade-up">
@@ -198,9 +192,7 @@ function RAGResultsView({ payload }: { payload: XAIPayload }) {
   );
 }
 
-// ============================================================================
 // GRAPH / NETWORK VIEW — Placeholder for Cytoscape
-// ============================================================================
 function GraphResultsView({ payload }: { payload: XAIPayload }) {
   return (
     <div className="fade-up">
@@ -247,9 +239,7 @@ function GraphResultsView({ payload }: { payload: XAIPayload }) {
   );
 }
 
-// ============================================================================
 // KPI CARD
-// ============================================================================
 function KPICard({ label, value, delta, deltaType }: {
   label: string;
   value: string;
@@ -268,9 +258,7 @@ function KPICard({ label, value, delta, deltaType }: {
   );
 }
 
-// ============================================================================
 // INTENT BADGE
-// ============================================================================
 function IntentBadge({ intent }: { intent: string }) {
   const config: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
     TEXT_TO_SQL: {

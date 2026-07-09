@@ -57,9 +57,7 @@ const SAFE_QUERIES: Record<string, { sql: string, cacheType: 'STATIC' | 'ACTIVE'
     }
 };
 
-// ============================================================================
 // CROSS-DISTRICT MENTION DETECTOR
-// ============================================================================
 function detectCrossDistrictMention(query: string, userDistrictId: number): string | null {
     // Catches patterns like "District 15", "district 7", "dist. 22"
     const districtMentions = query.match(/district\s*\.?\s*(\d+)/gi);
@@ -68,15 +66,13 @@ function detectCrossDistrictMention(query: string, userDistrictId: number): stri
     for (const mention of districtMentions) {
         const num = parseInt(mention.replace(/\D/g, ''), 10);
         if (!isNaN(num) && num !== userDistrictId) {
-            return `⚠️ Your query mentions District ${num}, but your access is scoped to District ${userDistrictId}. Results below are filtered to YOUR jurisdiction only. To access cross-district data, contact your Superintendent.`;
+            return ` Your query mentions District ${num}, but your access is scoped to District ${userDistrictId}. Results below are filtered to YOUR jurisdiction only. To access cross-district data, contact your Superintendent.`;
         }
     }
     return null;
 }
 
-// ============================================================================
 // PARAMETER EXTRACTION & VALIDATION
-// ============================================================================
 const llmExtractParams = async (query: string, intentKey: string): Promise<any[]> => {
     // TODO for production: Swap this Regex block for a fast, low-temperature LLM call 
     // structured to output EXACTLY a JSON array of ISO dates: ["2026-03-01", "2026-04-15"]
@@ -132,9 +128,7 @@ const validateParams = (params: any[], intentKey: string): any[] => {
     return params;
 };
 
-// ============================================================================
 // INTENT KEYWORD MAPPING (case-insensitive)
-// ============================================================================
 function resolveQueryKey(normalizedQuery: string): string {
     if (normalizedQuery.includes('chargesheet')) return 'chargesheets_by_date_range';
     if (normalizedQuery.includes('arrest')) return 'arrests_by_date_range';
@@ -164,9 +158,7 @@ function resolveQueryKey(normalizedQuery: string): string {
     return 'unknown';
 }
 
-// ============================================================================
 // MAIN SQL AGENT ENTRY POINT
-// ============================================================================
 export async function call_sql_agent(userQuery: string, userContext: UserContext): Promise<any> {
     const reasoningPath: string[] = [];
 

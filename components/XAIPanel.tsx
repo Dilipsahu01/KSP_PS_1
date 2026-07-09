@@ -10,9 +10,7 @@ interface XAIPanelProps {
   onClose: () => void;
 }
 
-// ============================================================================
 // XAI SLIDE-OUT PANEL
-// ============================================================================
 export default function XAIPanel({ payload, query, onClose }: XAIPanelProps) {
   const { explainability, security_context, intent_routed, processing_time_ms } = payload;
 
@@ -78,7 +76,7 @@ export default function XAIPanel({ payload, query, onClose }: XAIPanelProps) {
                 />
               ))}
               {/* Cross-District Warning Detection */}
-              {explainability.reasoning_path.some(r => r.includes('⚠️')) && (
+              {explainability.reasoning_path.some(r => r.includes('')) && (
                 <SecurityRow
                   icon={<AlertTriangle className="w-3.5 h-3.5" />}
                   label="Warning"
@@ -103,7 +101,7 @@ export default function XAIPanel({ payload, query, onClose }: XAIPanelProps) {
 
               <div className="space-y-4">
                 {explainability.reasoning_path.map((step, i) => {
-                  const isWarning = step.includes('⚠️');
+                  const isWarning = step.includes('');
                   return (
                     <div key={i} className="relative flex items-start gap-3">
                       {/* Dot */}
@@ -221,9 +219,7 @@ export default function XAIPanel({ payload, query, onClose }: XAIPanelProps) {
   );
 }
 
-// ============================================================================
 // SUB-COMPONENTS
-// ============================================================================
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
@@ -288,9 +284,7 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-// ============================================================================
 // SQL SYNTAX HIGHLIGHTER (Lightweight, no external dependency)
-// ============================================================================
 function SQLBlock({ sql }: { sql: string }) {
   const highlighted = highlightSQL(sql);
 

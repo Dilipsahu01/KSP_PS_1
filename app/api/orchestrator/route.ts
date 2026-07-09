@@ -2,9 +2,7 @@
 import { NextResponse } from 'next/server';
 import { call_sql_agent, UserContext } from '../../../utils/sql_agent';
 
-// ============================================================================
 // JWT MOCK (Production: Replace with Catalyst Authentication / jose library)
-// ============================================================================
 function extractUserContext(req: Request): UserContext {
     const authHeader = req.headers.get('authorization');
 
@@ -24,9 +22,7 @@ function extractUserContext(req: Request): UserContext {
     };
 }
 
-// ============================================================================
 // HYBRID INTENT ROUTER (Rule-based + ML Fallback)
-// ============================================================================
 class HybridIntentRouter {
     private keywords = {
         "TEXT_TO_SQL": [
@@ -87,9 +83,7 @@ class HybridIntentRouter {
 
 const router = new HybridIntentRouter();
 
-// ============================================================================
 // MAIN NEXT.JS API HANDLER
-// ============================================================================
 export async function POST(req: Request) {
     try {
         // 1. Extract Auth Context (Strict — fails if no token)
@@ -120,7 +114,7 @@ export async function POST(req: Request) {
             lowerQueryForBlock.includes("suspension")
         ) {
             return NextResponse.json({
-                nlp_answer: "⚠️ RESTRICTED: Your query requested sensitive personnel, PII, or informant data. Access is denied at this role level.",
+                nlp_answer: " RESTRICTED: Your query requested sensitive personnel, PII, or informant data. Access is denied at this role level.",
                 visualization_type: "TEXT",
                 reasoning_path: ["Query blocked by PII/Restricted Data Classifier."],
                 execution_details: null,

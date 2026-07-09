@@ -6,9 +6,7 @@ import OmniSearch from '../components/OmniSearch';
 import ResultsView from '../components/ResultsView';
 import XAIPanel from '../components/XAIPanel';
 
-// ============================================================================
 // XAI PAYLOAD TYPE (mirrors backend response)
-// ============================================================================
 export interface XAIPayload {
   query_id: string;
   intent_routed: 'TEXT_TO_SQL' | 'RAG' | 'GRAPH';
@@ -40,9 +38,7 @@ export interface XAIPayload {
 
 type QueryState = 'idle' | 'routing' | 'executing' | 'complete' | 'error';
 
-// ============================================================================
 // MAIN DASHBOARD PAGE
-// ============================================================================
 export default function DashboardPage() {
   const [queryState, setQueryState] = useState<QueryState>('idle');
   const [payload, setPayload] = useState<XAIPayload | null>(null);
@@ -225,9 +221,7 @@ export default function DashboardPage() {
   );
 }
 
-// ============================================================================
 // SUB-COMPONENTS
-// ============================================================================
 function StatusPill({ icon, label, status }: { icon: React.ReactNode; label: string; status: 'online' | 'offline' }) {
   return (
     <div className="flex items-center gap-1.5">
